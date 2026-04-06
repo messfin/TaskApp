@@ -1,4 +1,5 @@
 import { UserButton } from '@clerk/clerk-react'
+import { clerkEnabled } from '../clerkEnabled.js'
 
 function Header() {
   return (
@@ -8,9 +9,11 @@ function Header() {
           <h1>My Tasks</h1>
           <p>Stay organized and get things done</p>
         </div>
-        <div className="header-user">
-          <UserButton afterSignOutUrl="/" />
-        </div>
+        {clerkEnabled ? (
+          <div className="header-user">
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        ) : null}
       </div>
     </header>
   )
