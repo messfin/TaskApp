@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useRouter, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Header from './components/Header'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
@@ -24,7 +24,6 @@ function AppContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('all')
-  const router = useRouter()
 
   useEffect(() => {
     fetchTasks()
