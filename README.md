@@ -1,29 +1,26 @@
 # To-Do List Application
 
-A modern to-do list application with React frontend and Express backend.
+A modern to-do list application with React frontend, Express backend, Supabase database, and Clerk authentication.
 
 ## Tech Stack
 
-- **Frontend**: React 18, Vite
-- **Backend**: Node.js, Express
+- **Frontend**: React 18, Vite, Clerk Authentication
+- **Backend**: Node.js, Express, Clerk Authentication
 - **Database**: Supabase PostgreSQL
+- **Authentication**: Clerk
 
 ## Project Structure
 
 ```
 C:\claudproj\
 ├── backend/          # Express API server
-├── frontend/         # React + Vite app
+├── frontend/          # React + Vite app
 └── README.md
 ```
 
-## Deployment to Vercel
+## Setup
 
-### Prerequisites
-- [Vercel CLI](https://vercel.com/cli) installed
-- [Supabase](https://supabase.com) project created
-
-### Step 1: Set up Supabase
+### 1. Supabase Setup
 
 1. Go to https://supabase.com and create a project
 2. Run this SQL in Supabase SQL Editor:
@@ -33,73 +30,93 @@ CREATE TABLE IF NOT EXISTS tasks (
   id BIGSERIAL PRIMARY KEY,
   text TEXT NOT NULL,
   completed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  user_id TEXT
 );
 
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Allow all" ON tasks;
-CREATE POLICY "Allow all" ON tasks FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage own tasks" ON tasks;
+CREATE POLICY "Users can manage own tasks" ON tasks
+FOR ALL USING (auth.uid()::TEXT = user_id) WITH CHECK (auth.uid()::TEXT = user_id);
 ```
 
-3. Get your Supabase URL and anon key from Settings → API
+### 2. Clerk Setup
 
-### Step 2: Deploy Backend
+1. Go to https://clerk.com and create an account
+2. Create a new application (choose any name)
+3. Copy your **Publishable Key** and **Secret Key** from Clerk Dashboard
 
-The backend needs to be deployed separately. Options:
+### 3. Environment Variables
 
-**Option A: Render.com (Recommended - Free tier)**
-1. Create account at https://render.com
-2. Connect your GitHub repo or upload directly
-3. Create Web Service:
-   - Root Directory: `backend`
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-4. Add environment variables:
-   - `SUPABASE_URL` = your Supabase URL
-   - `SUPABASE_ANON_KEY` = your Supabase anon key
+**Backend** (`backend/.env`):
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+FRONTEND_URL=http://localhost:5173
+```
 
-**Option B: Railway.app**
-1. Create account at https://railway.app
-2. New Project → Deploy from GitHub
-3. Add environment variables in settings
+**Frontend** (`frontend/.env`):
+```
+VITE_API_URL=http://localhost:3001/api
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+```
 
-**Option C: Fly.io**
-1. Install Fly CLI
-2. `fly launch` in backend folder
-3. `fly secrets set SUPABASE_URL=... SUPABASE_ANON_KEY=...`
-4. `fly deploy`
-
-### Step 3: Deploy Frontend to Vercel
-
-1. Push your code to GitHub
-2. Go to https://vercel.com
-3. Import project from GitHub
-4. Set Root Directory: `frontend`
-5. Add environment variable:
-   - `VITE_API_URL` = your backend URL (e.g., `https://your-backend.railway.app/api`)
-6. Deploy!
-
-### Local Development
+### 4. Install Dependencies
 
 ```bash
-# Backend
-cd backend
-npm install
-npm start  # Runs on http://localhost:3001
-
-# Frontend
-cd frontend
-npm install
-npm run dev  # Runs on http://localhost:5173
+cd backend && npm install
+cd frontend && npm install
 ```
 
-## API Endpoints
+## Local Development
+
+```bash
+# Terminal 1 - Backend
+cd backend
+npm start
+
+# Terminal 2 - Frontend
+cd frontend
+npm run dev
+```
+
+## Deployment
+
+### Backend (Render.com)
+
+1. Create account at https://render.com
+2. New → Web Service → Connect GitHub repo
+3. Root Directory: `backend`
+4. Build Command: `npm install`
+5. Start Command: `npm start`
+6. Environment Variables:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `FRONTEND_URL` = your Vercel frontend URL
+
+### Frontend (Vercel)
+
+1. Import GitHub repo
+2. Root Directory: `frontend`
+3. Environment Variables:
+   - `VITE_API_URL` = your Render backend URL + `/api`
+   - `VITE_CLERK_PUBLISHABLE_KEY`
+4. Deploy
+
+## API Endpoints (Protected)
+
+All endpoints require Clerk authentication via `Authorization: Bearer <session_token>` header.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /api/tasks | Get all tasks |
+| GET | /api/tasks | Get user's tasks |
 | POST | /api/tasks | Create task |
 | PUT | /api/tasks/:id | Update task |
 | PATCH | /api/tasks/:id/complete | Toggle complete |
 | DELETE | /api/tasks/:id | Delete task |
+| GET | /api/health | Health check (public) |

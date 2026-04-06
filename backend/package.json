@@ -1,13 +1,14 @@
 {
   "name": "todo-backend",
   "version": "1.0.0",
-  "description": "To-Do List API Backend with Supabase",
+  "description": "To-Do List API Backend with Supabase and Clerk",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
+    "@clerk/express": "^1.0.0",
     "@supabase/supabase-js": "^2.39.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

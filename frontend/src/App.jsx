@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRouter, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Header from './components/Header'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
@@ -6,10 +7,24 @@ import FilterBar from './components/FilterBar'
 import { taskAPI } from './services/api'
 
 function App() {
+  return (
+    <>
+      <SignedIn>
+        <AppContent />
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  )
+}
+
+function AppContent() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('all')
+  const router = useRouter()
 
   useEffect(() => {
     fetchTasks()
@@ -29,9 +44,9 @@ function App() {
     }
   }
 
-  const addTask = async (title) => {
+  const addTask = async (text) => {
     try {
-      const newTask = await taskAPI.create(title)
+      const newTask = await taskAPI.create(text)
       setTasks(prev => [newTask, ...prev])
     } catch (err) {
       alert('Failed to add task. Please try again.')
@@ -39,9 +54,9 @@ function App() {
     }
   }
 
-  const updateTask = async (id, title) => {
+  const updateTask = async (id, text) => {
     try {
-      const updatedTask = await taskAPI.update(id, title)
+      const updatedTask = await taskAPI.update(id, text)
       setTasks(prev => prev.map(t => t.id === id ? updatedTask : t))
     } catch (err) {
       alert('Failed to update task. Please try again.')
