@@ -2,11 +2,31 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
+/** Set by ClerkApiAuth when signed in; sends Bearer token to Express. */
+let clerkGetToken = null
+export function setClerkTokenGetter(fn) {
+  clerkGetToken = typeof fn === 'function' ? fn : null
+}
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   }
+})
+
+api.interceptors.request.use(async (config) => {
+  if (clerkGetToken) {
+    try {
+      const token = await clerkGetToken()
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch (e) {
+      console.warn('Auth token not attached:', e)
+    }
+  }
+  return config
 })
 
 export const taskAPI = {

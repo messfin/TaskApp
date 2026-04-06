@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react'
-import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
 import Header from './components/Header'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
 import FilterBar from './components/FilterBar'
 import { clerkEnabled } from './clerkEnabled.js'
-import { taskAPI } from './services/api'
+import { taskAPI, setClerkTokenGetter } from './services/api'
+
+/** Attaches Clerk session JWT to API requests (required by @clerk/express). */
+function ClerkApiAuth({ children }) {
+  const { getToken } = useAuth()
+  useEffect(() => {
+    setClerkTokenGetter(() => getToken())
+    return () => setClerkTokenGetter(null)
+  }, [getToken])
+  return children
+}
 
 function App() {
   if (!clerkEnabled) {
@@ -14,7 +24,9 @@ function App() {
   return (
     <>
       <SignedIn>
-        <AppContent />
+        <ClerkApiAuth>
+          <AppContent />
+        </ClerkApiAuth>
       </SignedIn>
       <SignedOut>
         <RedirectToSignIn fallbackRedirectUrl="/" />

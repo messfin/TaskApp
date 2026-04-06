@@ -10,6 +10,9 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
+const authDisabled = process.env.DISABLE_CLERK_AUTH === 'true'
+const localUserId = process.env.LOCAL_USER_ID || 'local-dev'
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
@@ -17,15 +20,29 @@ app.use(cors({
 }))
 app.use(express.json())
 
-// Clerk authentication middleware
-app.use(clerkMiddleware())
+if (authDisabled) {
+  app.use((req, res, next) => {
+    req.auth = { userId: localUserId }
+    next()
+  })
+} else {
+  app.use(clerkMiddleware())
+}
 
-// Routes
-app.use('/api/tasks', tasksRouter)
+// Routes — require Clerk session unless local dev disables auth (pair with VITE_SKIP_AUTH on frontend)
+if (authDisabled) {
+  app.use('/api/tasks', tasksRouter)
+} else {
+  app.use('/api/tasks', requireAuth(), tasksRouter)
+}
 
 // Health check (public)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'supabase', auth: 'clerk' })
+  res.json({
+    status: 'ok',
+    database: 'supabase',
+    auth: authDisabled ? 'disabled' : 'clerk',
+  })
 })
 
 // Error handling

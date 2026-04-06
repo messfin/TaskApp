@@ -1,10 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { requireAuth } = require('@clerk/express')
 const supabase = require('../supabase/client')
-
-// Middleware to require authentication
-requireAuth()
 
 // GET /api/tasks - Get tasks for current user only
 router.get('/', async (req, res) => {
